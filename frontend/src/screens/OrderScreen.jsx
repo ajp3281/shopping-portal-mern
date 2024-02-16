@@ -6,12 +6,13 @@ import { useSelector } from 'react-redux';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js'
 import Message from '../components/Message';
 import Loader from '../components/Loader';
-import { useGetOrderDetailsQuery, usePayOrderMutation, useGetPaypalClientIdQuery } from '../slices/ordersApiSlice';
+import { useGetOrderDetailsQuery, usePayOrderMutation, useGetPaypalClientIdQuery, useDeliverOrderMutation } from '../slices/ordersApiSlice';
 
 const OrderScreen = () => {
     const { id: orderId } = useParams();
     const { data: order, refetch, isLoading, error } = useGetOrderDetailsQuery(orderId);
     const [payOrder, { isLoading: loadingPay}] = usePayOrderMutation();
+    const [deliverOrder, { isLoading: loadingDeliver }] = useDeliverOrderMutation();
     const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
     const { data: paypal, isLoading: loadingPayPal, error: errorPayPal } = useGetPaypalClientIdQuery();
     const { userInfo } = useSelector((state) => state.auth);
@@ -70,7 +71,17 @@ const OrderScreen = () => {
           .then((orderID) => {
             return orderID;
           });
-      }
+      };
+
+    const deliverOrderHandler = async () => {
+        try {
+            await deliverOrder(orderId);
+            refetch();
+            toast.success('Order delivered');
+        } catch (err) {
+            toast.error(err?.data?.message || err.message);
+        }
+    };
 
     return isLoading ? <Loader /> : error ? <Message variant='danger'>{error}</Message> : (
         <>
@@ -185,7 +196,7 @@ const OrderScreen = () => {
                                 )}
 
                                 
-                                {/*{loadingDeliver && <Loader />}
+                                {loadingDeliver && <Loader />}
 
                                 {userInfo &&
                                     userInfo.isAdmin &&
@@ -195,14 +206,12 @@ const OrderScreen = () => {
                                         <Button
                                         type='button'
                                         className='btn btn-block'
-                                        onClick={deliverHandler}
+                                        onClick={deliverOrderHandler}
                                         >
                                         Mark As Delivered
                                         </Button>
                                     </ListGroup.Item>
-                                    )} 
-                                    */}               
-                            
+                                )}               
                         </ListGroup>
                     </Card>
                 </Col>

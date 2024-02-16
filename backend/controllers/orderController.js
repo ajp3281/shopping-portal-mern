@@ -82,14 +82,21 @@ const updateOrderToPaid = asyncHandler(async (req,res) => {
 //@route    PUT /api/orders/:id/deliver
 //@access   private/admin
 const updateOrderToDelivered = asyncHandler(async (req,res) => {
-    res.send('update order to delivered');
+    const order = await Order.findById(req.params.id);
+    if (order) {
+        order.isDelivered = true;
+        order.deliveredAt = Date.now();
+        const updatedOrder = await order.save();
+        res.status(200).json(updatedOrder);
+    }
 });
 
 // @desc    get all orders
 //@route    GET /api/orders
 //@access   private/admin
 const getOrders = asyncHandler(async (req,res) => {
-    res.send('get all orders');
+    const orders = await Order.find({}).populate('user', 'id name');
+    res.status(200).json(orders);
 });
 
 export {
